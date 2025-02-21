@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minimal Deployment to AWS for JVM Applications Using Terraform</title>
+<meta name="description" content="Unknown">
+<meta name="keywords" content="Software Engineering, Devops, Cloud">
+<meta name="author" content="Unknown">
+<meta property="og:title" content="Minimal Deployment to AWS for JVM Applications Using Terraform">
+<meta property="og:description" content="Unknown">
+<meta property="og:type" content="website">
+<meta property="og:url" content="http://new.drnd.rocks">
+<meta property="og:image" content="http://new.drnd.rocks/image.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Minimal Deployment to AWS for JVM Applications Using Terraform">
+<meta name="twitter:description" content="Unknown">
+<meta name="twitter:image" content="http://new.drnd.rocks">
+<link rel="canonical" href="http://new.drnd.rocks">
+<link rel="stylesheet" href="/css/main.css">
+ 
+</head>
+<body>
+    <header>
+    <nav>
+        <ul class="menu">
+            <li><a href="http://new.drnd.rocks/">Main Page</a></li>
+            <li><a href="http://new.drnd.rocks/posts" class="menu-item">Blog</a></li>
+            <li><a href="http://new.drnd.rocks/about">About</a></li>
+        </ul>
+    </nav>
+</header></div>
+ 
+    <div class="container">
+        <div class="post-meta">
+    <span class="publish-date">Published on: February 7, 2025</span>
+<!--     <span class="tags">Tags: <a href="#">Cycling</a>, <a href="#">Kotlin</a>, <a href="#">Ktor</a></span> -->
+</div>
+        <p><h1>Minimal Deployment to AWS for JVM Applications Using Terraform</h1>
+
+<h2>Introduction</h2>
+
+<p>In this blog post, I will guide you through the process of deploying a Kotlin application running on the JVM to AWS using Terraform. The goal is to demonstrate how you can run applications in the cloud for relatively low costs. It focuses on deploying to an EC2 instance without using any container technology to minimize costs. Additionally, we will create an S3 bucket to store and push the executable JAR file.
+The code snippets in this blog post are provided to give a better explanation of how to achieve this using Terraform. For more detailed information, please check the Terraform module on my <a href="https://github.com/drndivoje/terraform-modules/tree/main/minimal-ec2">GitHub</a>.</p>
+
+<p>There are a few trade-offs to consider with this approach:</p>
+
+<ul>
+<li><strong>Scalability</strong>: The application runs on a single EC2 instance, which means there is no scalability. If the instance fails, the application will be unavailable.</li>
+<li><strong>Load Balancing</strong>: There is no load balancing configured, so all traffic is directed to a single instance.</li>
+<li><strong>Direct Access</strong>: The EC2 instance is directly reachable, which can pose security risks.</li>
+<li><strong>Storage</strong>: There is no additional storage configured. All data is ephemeral and will be lost if the instance is terminated.</li>
+<li><strong>Network Resources</strong>: The application runs in the default VPC in a single availability zone, with no additional network resources configured.</li>
+</ul>
+
+<p>For most pet project applications or simple proof of concepts (POCs), this setup should be sufficient. It provides a cost-effective way to deploy and run your applications in the cloud without the complexity of container orchestration or additional infrastructure components.</p>
+
+<h2>Prerequisites</h2>
+
+<p>Before we begin, ensure you have the following:</p>
+
+<ul>
+<li>An AWS account</li>
+<li>AWS CLI installed and configured</li>
+<li>Terraform installed</li>
+<li>A Kotlin/Java application packed as an executable JAR file ready for deployment</li>
+</ul>
+
+<h2>Setting Up Terraform</h2>
+
+<p>Create a <code>main.tf</code> file with the following content to configure your AWS provider and choose the region of your preference:</p>
+
+<pre><code class="language-bash">provider &quot;aws&quot; {
+    region = &quot;us-west-2&quot;
+}
+</code></pre>
+
+<h2>Defining the EC2 Instance</h2>
+
+<p>Next, define the EC2 machine and the AMI:</p>
+
+<pre><code class="language-bash">data &quot;aws_ami&quot; &quot;amazon_linux_2&quot; {
+    most_recent = true
+
+    filter {
+        name   = &quot;name&quot;
+        values = [&quot;amzn2-ami-hvm-*-x86_64-gp2&quot;]
+    }
+
+    filter {
+        name   = &quot;virtualization-type&quot;
+        values = [&quot;hvm&quot;]
+    }
+
+    owners = [&quot;amazon&quot;]
+}
+
+resource &quot;aws_instance&quot; &quot;app_server&quot; {
+    ami           = data.aws_ami.amazon_linux_2.id
+    instance_type = &quot;t2.micro&quot;
+
+    iam_instance_profile = aws_iam_instance_profile.app_profile.name
+    vpc_security_group_ids = [aws_security_group.app_sg.id]
+
+    user_data = &lt;&lt;-EOF
+                #!/bin/bash
+                yum update -y
+                yum install -y java-1.8.0-openjdk
+                aws s3 cp s3://${aws_s3_bucket.app_bucket.bucket}/app.jar /home/ec2-user/app.jar
+                java -jar /home/ec2-user/app.jar
+                EOF
+
+    tags = {
+        Name = &quot;KotlinApplication&quot;
+    }
+}
+</code></pre>
+
+<p>Ensure that the AMI you choose is compatible with the <code>t2.micro</code> instance type and can run the Java Virtual Machine (JVM). The best option is to use one of the Amazon Linux 2 AMIs, which are optimized for performance on AWS and come with long-term support.</p>
+
+<h2>Security Groups</h2>
+
+<p>Define security groups based on the requirements of your service or application. In this case, the security group allows HTTP access to expose the API over port 80.</p>
+
+<pre><code class="language-bash">resource &quot;aws_security_group&quot; &quot;app_sg&quot; {
+    name        = &quot;app_security_group&quot;
+    description = &quot;Allow HTTP&quot;
+
+    ingress {
+        from_port   = 80
+        to_port     = 80
+        protocol    = &quot;tcp&quot;
+        cidr_blocks = [&quot;0.0.0.0/0&quot;]
+    }
+
+    egress {
+        from_port   = 0
+        to_port     = 0
+        protocol    = &quot;-1&quot;
+        cidr_blocks = [&quot;0.0.0.0/0&quot;]
+    }
+}
+</code></pre>
+
+<p>Attach the security group to the EC2 instance:</p>
+
+<pre><code class="language-bash">resource &quot;aws_instance&quot; &quot;app_server&quot; {
+    ami           = &quot;ami-0c55b159cbfafe1f0&quot;
+    instance_type = &quot;t2.micro&quot;
+
+    vpc_security_group_ids = [aws_security_group.app_sg.id]
+
+    tags = {
+        Name = &quot;KotlinAppServer&quot;
+    }
+}
+</code></pre>
+
+<h2>Deploying the Application</h2>
+
+<p>The deployment of the application is done using an S3 bucket. First, the application executable (in this case, an executable JAR) is uploaded to the S3 bucket. Then, the user data of the EC2 instance is configured to pull the executable from the S3 bucket and run it.</p>
+
+<pre><code class="language-bash">resource &quot;aws_s3_bucket&quot; &quot;app_bucket&quot; {
+    bucket = &quot;kotlin-app-bucket&quot;
+    acl    = &quot;private&quot;
+}
+</code></pre>
+
+<p>Upload your JAR file to the S3 bucket:</p>
+
+<pre><code class="language-bash">resource &quot;aws_s3_bucket_object&quot; &quot;app_jar&quot; {
+    bucket = aws_s3_bucket.app_bucket.bucket
+    key    = &quot;app.jar&quot;
+    source = &quot;path/to/your/app.jar&quot;
+    acl    = &quot;private&quot;
+}
+</code></pre>
+
+<p>To enable the EC2 instance to connect to the S3 bucket, additional roles and permissions need to be assigned to the EC2 instance. This involves creating an IAM instance profile and attaching it to the EC2 instance.</p>
+
+<p>First, create an IAM instance profile:</p>
+
+<pre><code class="language-bash">resource &quot;aws_iam_role&quot; &quot;app_role&quot; {
+    name = &quot;app_role&quot;
+
+    assume_role_policy = jsonencode({
+        Version = &quot;2012-10-17&quot;
+        Statement = [
+            {
+                Action = &quot;sts:AssumeRole&quot;
+                Effect = &quot;Allow&quot;
+                Principal = {
+                    Service = &quot;ec2.amazonaws.com&quot;
+                }
+            }
+        ]
+    })
+}
+
+resource &quot;aws_iam_instance_profile&quot; &quot;app_profile&quot; {
+    name = &quot;app_instance_profile&quot;
+    role = aws_iam_role.app_role.name
+}
+</code></pre>
+
+<p>Then, attach the IAM instance profile to the EC2 instance configuration:</p>
+
+<pre><code class="language-bash">resource &quot;aws_instance&quot; &quot;app_server&quot; {
+    ami           = data.aws_ami.amazon_linux_2.id
+    instance_type = &quot;t2.micro&quot;
+
+    iam_instance_profile = aws_iam_instance_profile.app_profile.name
+    vpc_security_group_ids = [aws_security_group.app_sg.id]
+
+    user_data = &lt;&lt;-EOF
+                #!/bin/bash
+                yum update -y
+                yum install -y java-1.8.0-openjdk
+                aws s3 cp s3://${aws_s3_bucket.app_bucket.bucket}/app.jar /home/ec2-user/app.jar
+                java -jar /home/ec2-user/app.jar
+                EOF
+
+    tags = {
+        Name = &quot;KotlinApplication&quot;
+    }
+}
+</code></pre>
+
+<p>With this approach, there is no need to open the SSH port on the machine. Less open ports less problems to worry when it comes to security</p>
+
+<h2>Conclusion</h2>
+
+<p>By following these steps, you can deploy a Kotlin application running on the JVM to AWS using Terraform. This setup allows you to run your applications in the cloud with minimal costs, leveraging AWS&rsquo;s pay-as-you-go pricing model.</p>
+</p>
+    </main>
+    <footer>
+        <p>&copy; 2025 Ivan Doskovic. All rights reserved.</p>
+    </footer>
+</body>
+</html>

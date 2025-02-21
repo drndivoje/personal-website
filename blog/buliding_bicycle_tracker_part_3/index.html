@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build bicycle tracker using Kotlin - Progress, Lessons Learned, and Decisions Made (Part 3)</title>
+<meta name="description" content="Unknown">
+<meta name="keywords" content="Software Engineering, Devops, Cloud">
+<meta name="author" content="Unknown">
+<meta property="og:title" content="Build bicycle tracker using Kotlin - Progress, Lessons Learned, and Decisions Made (Part 3)">
+<meta property="og:description" content="Unknown">
+<meta property="og:type" content="website">
+<meta property="og:url" content="http://new.drnd.rocks">
+<meta property="og:image" content="http://new.drnd.rocks/image.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Build bicycle tracker using Kotlin - Progress, Lessons Learned, and Decisions Made (Part 3)">
+<meta name="twitter:description" content="Unknown">
+<meta name="twitter:image" content="http://new.drnd.rocks">
+<link rel="canonical" href="http://new.drnd.rocks">
+<link rel="stylesheet" href="/css/main.css">
+ 
+</head>
+<body>
+    <header>
+    <nav>
+        <ul class="menu">
+            <li><a href="http://new.drnd.rocks/">Main Page</a></li>
+            <li><a href="http://new.drnd.rocks/posts" class="menu-item">Blog</a></li>
+            <li><a href="http://new.drnd.rocks/about">About</a></li>
+        </ul>
+    </nav>
+</header></div>
+ 
+    <div class="container">
+        <div class="post-meta">
+    <span class="publish-date">Published on: October 3, 2024</span>
+<!--     <span class="tags">Tags: <a href="#">Cycling</a>, <a href="#">Kotlin</a>, <a href="#">Ktor</a></span> -->
+</div>
+        <p><h1>Build bicycle tracker using Kotlin - Progress, Lessons Learned, and Decisions Made (Part 3)</h1>
+
+<p>After several months of on-and-off work on my <a href="https://github.com/drndivoje/whereisivan" target="_blank">personal bicycle tracking app</a>, I’ve decided to share my progress,
+the lessons I’ve learned, and the decisions that shaped the project.</p>
+
+<h1>Android Client and Complexity</h1>
+
+<p>As I mentioned in <a href="/blog/buliding_bicycle_tracker_part_2" target="_blank">previous post</a>, I initially chose to use the Multiplatform Compose library for Android.
+The goal of this library is to provide a unified approach for mobile multiplatform development.
+However, for creating a basic MVP, this level of support wasn’t strictly necessary.
+One downside of using Multiplatform Compose is that it adds complexity (as every library),
+especially if you&rsquo;re developing your first mobile app. To simplify things, I switched to using Jetpack Compose, a library specifically for building Android apps, which made the development process more straightforward.</p>
+
+<h1>Dashboard UI</h1>
+
+<p>The dashboard is a simple React application that displays the user’s current location on a map. The main idea behind the personal bicycle tracker is to allow me to track my real-time location while cycling, using my Android phone.
+The app then sends the data to a server, so my family and friends can view my live location through the dashboard in a web browser.</p>
+
+<h1>Deployment and infrastructure</h1>
+
+<p>For deployment, I chose to host the server API and the dashboard UI on AWS using Docker containers managed by ECS (Elastic Container Service).
+While this may not be the cheapest solution there are definitely more cost-effective options on AWS, such as using Lambda functions. I preferred this setup because it allows easy deployment to other cloud providers or any Docker-compatible platform.</p>
+
+<p>Another key decision was to define the infrastructure using Terraform, which simplifies the process of creating and destroying the entire stack, enabling seamless management of the infrastructure.</p>
+
+<h1>What’s Next for My Bicycle Tracking App?</h1>
+
+<p>This project is still a work in progress, and I’m excited to continue investing more time into it. The primary goal is to enhance my skills as a full-stack developer and gain deeper insights into the Kotlin ecosystem.
+So far, it’s been a interesting journey, even with the limited time I’ve had to dedicate to it.</p>
+</p>
+    </main>
+    <footer>
+        <p>&copy; 2025 Ivan Doskovic. All rights reserved.</p>
+    </footer>
+</body>
+</html>

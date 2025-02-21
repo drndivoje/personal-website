@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build bicycle tracker using Kotlin - setting up the client (Part 2)</title>
+<meta name="description" content="Unknown">
+<meta name="keywords" content="Software Engineering, Devops, Cloud">
+<meta name="author" content="Unknown">
+<meta property="og:title" content="Build bicycle tracker using Kotlin - setting up the client (Part 2)">
+<meta property="og:description" content="Unknown">
+<meta property="og:type" content="website">
+<meta property="og:url" content="http://new.drnd.rocks">
+<meta property="og:image" content="http://new.drnd.rocks/image.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Build bicycle tracker using Kotlin - setting up the client (Part 2)">
+<meta name="twitter:description" content="Unknown">
+<meta name="twitter:image" content="http://new.drnd.rocks">
+<link rel="canonical" href="http://new.drnd.rocks">
+<link rel="stylesheet" href="/css/main.css">
+ 
+</head>
+<body>
+    <header>
+    <nav>
+        <ul class="menu">
+            <li><a href="http://new.drnd.rocks/">Main Page</a></li>
+            <li><a href="http://new.drnd.rocks/posts" class="menu-item">Blog</a></li>
+            <li><a href="http://new.drnd.rocks/about">About</a></li>
+        </ul>
+    </nav>
+</header></div>
+ 
+    <div class="container">
+        <div class="post-meta">
+    <span class="publish-date">Published on: April 2, 2024</span>
+<!--     <span class="tags">Tags: <a href="#">Cycling</a>, <a href="#">Kotlin</a>, <a href="#">Ktor</a></span> -->
+</div>
+        <p><h1>Build bicycle tracker using Kotlin - setting up the client (Part 2)</h1>
+
+<p>After laying down the groundwork for the backend of my cycle tracking app, my next step is to establish the basic code structure for the client side. I plan to utilize the Multiplatform Compose framework, which allows for the creation of cross-platform user interfaces using Kotlin.
+ <!-- more --></p>
+
+<h1>Prerequisite</h1>
+
+<p>To kickstart the project and begin development with the Multiplatform Compose framework. I have installed Android Studio along with all the other tools as outlined in <a href="https://www.jetbrains.com/help/kotlin-multiplatform-dev/compose-multiplatform-setup.html" target="_blank">the official Multiplatform Compose documentation.</a></p>
+
+<h1>What my bicycle tracking client should do?</h1>
+
+<p>Currently, if you browse through the Apple App Store or Google Play Store, you&rsquo;ll find numerous applications that simulate bicycle computers or trackers, offering a wide range of features. However, many of these features drain battery quickly, often requiring additional charging for long rides to maintain continuous operation. For the initial version of my bicycle tracker app, I aim to keep things simple with minimal features. Here&rsquo;s what I envision:</p>
+
+<ul>
+<li>The client should continuously send the current geographical location to the server.</li>
+<li>The client should be able to track the elapsed time of the activity.</li>
+</ul>
+
+<p>These two features represent the bare essentials. While displaying the current location on a map or incorporating additional metrics like speed and average speed would be beneficial, they&rsquo;re of lower priority and can be addressed in subsequent iterations. My primary focus is to keep the client as streamlined as possible for this initial release.</p>
+
+<h1>Setting up Multiplatform Compose project</h1>
+
+<p>I utilized a convenient <a href="https://kmp.jetbrains.com/" target="_blank">project generator</a> for Multiplatform Compose to create the project structure. My primary objective is to develop a client for Android devices. Since I possess older Android phones, deploying the app on them is considerably simpler compared to iPhones.</p>
+
+<p>After generating the initial project structure using the Multiform Compose project generator, I proceeded to implement a basic UI for my bicycle tracker Android client.&rdquo;</p>
+
+<figure>
+ <img src="/images/basic_android_client_screen.png" alt="Intial Screen for bycycle tracker on Android device"/>
+    <figcaption>Intial Screen for bycycle tracker on Android device</figcaption>
+ </figure>
+
+<p>Constructing this simple UI is straightforward, even for me as a complete beginner in mobile development. The main file  where this UI is defined appears as follows::</p>
+
+<pre><code>@Composable
+@Preview
+fun App() {
+    MaterialTheme {
+        var hours by remember { mutableStateOf(&quot;00&quot;) }
+        var minutes by remember { mutableStateOf(&quot;00&quot;) }
+        var seconds by remember { mutableStateOf(&quot;00&quot;) }
+        Column(
+            modifier = Modifier.padding(all = 5.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            ActivityCommands(modifier = Modifier.padding(all = 5.dp))
+            TotalElapsedTime(hours = hours, minutes = minutes, seconds = seconds)
+        }
+    }
+}
+</code></pre>
+
+<p>Based on the provided code snippet, the main screen comprises two components. The first is the *<em>ActivityCommands</em>, which consists of buttons for starting and stopping the activity. The second component is TotalElapsedTime, responsible for displaying the current elapsed time.</p>
+
+<p>There are two mutable states representing hours, minutes, and seconds of the total elapsed time. These components are structured similarly to the &ldquo;main&rdquo; component, utilizing Kotlin Composable functions for building the Android UI. For instance, the *<em>ActivityCommands</em> component looks like this:</p>
+
+<pre><code>@Composable
+internal fun ActivityCommands(
+    modifier: Modifier = Modifier,
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.spacedBy(5.dp)
+
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = horizontalArrangement
+    ) {
+        Button(onClick = { }) {
+            Text(&quot;Start&quot;)
+        }
+        Button(onClick = { }) {
+            Text(&quot;Pause&quot;)
+        }
+        Button(onClick = { }) {
+            Text(&quot;Stop&quot;)
+        }
+    }
+
+}
+</code></pre>
+
+<p>Currently, these components do not contain any logic for starting/stopping activity or changing the elapsed time. This functionality will be added in a future post by incorporating corresponding backend endpoints. The objective of this post is to establish the basic project structure for the client-side codebase. Changes described in this post you can see <a href="https://github.com/drndivoje/whereisivan/commit/bebd335497147e382cdbe88e884f20c6a7962fef">here</a>.</p>
+</p>
+    </main>
+    <footer>
+        <p>&copy; 2025 Ivan Doskovic. All rights reserved.</p>
+    </footer>
+</body>
+</html>

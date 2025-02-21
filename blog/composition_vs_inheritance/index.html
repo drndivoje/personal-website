@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Composition over inheritance. Java VS Go</title>
+<meta name="description" content="Unknown">
+<meta name="keywords" content="Software Engineering, Devops, Cloud">
+<meta name="author" content="Unknown">
+<meta property="og:title" content="Composition over inheritance. Java VS Go">
+<meta property="og:description" content="Unknown">
+<meta property="og:type" content="website">
+<meta property="og:url" content="http://new.drnd.rocks">
+<meta property="og:image" content="http://new.drnd.rocks/image.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Composition over inheritance. Java VS Go">
+<meta name="twitter:description" content="Unknown">
+<meta name="twitter:image" content="http://new.drnd.rocks">
+<link rel="canonical" href="http://new.drnd.rocks">
+<link rel="stylesheet" href="/css/main.css">
+ 
+</head>
+<body>
+    <header>
+    <nav>
+        <ul class="menu">
+            <li><a href="http://new.drnd.rocks/">Main Page</a></li>
+            <li><a href="http://new.drnd.rocks/posts" class="menu-item">Blog</a></li>
+            <li><a href="http://new.drnd.rocks/about">About</a></li>
+        </ul>
+    </nav>
+</header></div>
+ 
+    <div class="container">
+        <div class="post-meta">
+    <span class="publish-date">Published on: February 7, 2021</span>
+<!--     <span class="tags">Tags: <a href="#">Cycling</a>, <a href="#">Kotlin</a>, <a href="#">Ktor</a></span> -->
+</div>
+        <p><h1>Composition over inheritance. Java VS Go</h1>
+
+<p>Recently, I had the opportunity to delve into the Go programming language. It proved to be a fascinating experience, particularly in contrast to my extensive background in Java. I was struck by how years of immersion in the Java ecosystem can sometimes lead to the acceptance of what are, in essence, glaring anti-patterns disguised as common practices. One such anti-pattern is the pervasive use of class inheritance over composition.
+ <!-- more -->
+ This particular issue is well-documented in <a href="https://en.wikipedia.org/wiki/Design_Patterns">Design Patterns: Elements of Reusable Object-Oriented&rdquo;</a>. a book published in 1994, long before the advent of Java and Go. Despite the passage of 27 years and the emergence of countless books and frameworks espousing modern software design principles, this anti-pattern persists, entrenched in both corporate codebases and popular libraries.
+&ldquo;`java
+public class Person {
+    protected String firstName;
+    protected String lastName;</p>
+
+<pre><code>public String sayHello() {
+    return this.firstName + this.lastName;
+}
+</code></pre>
+
+<p>}</p>
+
+<p>public class Emlpoyee extends Person {
+    private String company;</p>
+
+<pre><code>//constructors
+@Override
+public String sayHello() {
+    return super.sayHello() + &quot; works in &quot; + this.company;
+}
+</code></pre>
+
+<p>}
+&ldquo;`<br />
+Consider a typical example in Java, where class inheritance and method overriding are employed to model relationships between entities. For instance, it&rsquo;s common to create an Employee class inheriting from a Person class, with the former overriding methods to include specific employment details. While this may seem innocuous at first, in practice, it often leads to unwieldy hierarchies and convoluted codebases, commonly referred to as &ldquo;inheritance hell.&rdquo;. Java, of course, provides alternatives to inheritance, such as composition, yet the language itself subtly encourages inheritance through mechanisms like the implicit extension of the Object class. Even prominent frameworks like JUnit and Spring (particularly in older versions) have historically favored inheritance-based designs.
+For example in JUnit 3 version, every test class should extend TestCase class. In older version of Spring MVC (version 2) in order to create controller you need to extend AbstractController. However, as the industry evolves, more elegant solutions have emerged. Modern frameworks, like Spring and JUnit, increasingly rely on annotations and annotation processors, moving away from inheritance-centric architectures. Despite this progress, legacy codebases remain rife with inheritance-based designs, perpetuating the anti-pattern.</p>
+
+<h2>Go aproach to inheritance</h2>
+
+<p>In contrast, the Go programming language adopts a pragmatic stance on inheritance by eschewing it entirely. Instead, Go emphasizes composition over inheritance through its struct-based approach. While it&rsquo;s possible to implement similar designs in Java, the absence of inheritance in Go forces developers to adopt more modular and maintainable code practices from the outset. Here is the same example but in Go.
+&ldquo;`go</p>
+
+<p>type Name struct {
+	FirstName             string<br />
+	LastName              string<br />
+}</p>
+
+<p>type Employee struct {
+	Name                  Name
+        Company               string<br />
+}
+func (r *Employee) SayHello() string {
+   return r.Name.sayHello() + r.LastName
+}</p>
+
+<p>&rdquo;`
+You could do similar things in Java or other object-oriented languages. The difference is, Java lets you easily fall into bad habits like relying too much on class inheritance, leading to messy code. Go, on the other hand, forces you to use composition instead, which keeps things cleaner from the start. This helps stop new programmers from repeating the same mistakes. It also stops people from making money by endlessly talking about old design patterns, showing that those patterns often come from flaws in language design.</p>
+</p>
+    </main>
+    <footer>
+        <p>&copy; 2025 Ivan Doskovic. All rights reserved.</p>
+    </footer>
+</body>
+</html>
