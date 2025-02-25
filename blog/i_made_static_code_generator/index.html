@@ -10,13 +10,13 @@
 <meta property="og:title" content="I made a static code generator">
 <meta property="og:description" content="Unknown">
 <meta property="og:type" content="website">
-<meta property="og:url" content="http://new.drnd.rocks">
-<meta property="og:image" content="http://new.drnd.rocks/image.jpg">
+<meta property="og:url" content="https://localhost:8080">
+<meta property="og:image" content="https://localhost:8080/image.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="I made a static code generator">
 <meta name="twitter:description" content="Unknown">
-<meta name="twitter:image" content="http://new.drnd.rocks">
-<link rel="canonical" href="http://new.drnd.rocks">
+<meta name="twitter:image" content="https://localhost:8080">
+<link rel="canonical" href="https://localhost:8080">
 <link rel="stylesheet" href="/css/main.css">
  
 </head>
@@ -24,9 +24,12 @@
     <header>
     <nav>
         <ul class="menu">
-            <li><a href="http://new.drnd.rocks/">Main Page</a></li>
-            <li><a href="http://new.drnd.rocks/blog" class="menu-item">Blog</a></li>
-            <li><a href="http://new.drnd.rocks/about">About</a></li>
+            <li><a href="https://localhost:8080/">Home</a></li>
+            
+                <li><a href="https://localhost:8080/blog">Blog</a></li>
+            
+                <li><a href="https://localhost:8080/about">About</a></li>
+            
         </ul>
     </nav>
 </header></div>
@@ -39,19 +42,19 @@
 </div>
         <p><h1>I made a static code generator</h1>
 
-<p>I used Zola, a static site generator written in Rust, to build my personal website from markdown files. My goal was to create a minimalist website with just a landing page and my blog posts. I wanted to avoid using JavaScript and keep everything as simple as possible.</p>
+<p>I used <a href="https://www.getzola.org/">Zola</a>, a static site generator written in Rust, to build my personal website from markdown files. My goal was to create a minimalist website with just a landing page and my blog posts. I wanted to avoid using JavaScript and keep everything as simple as possible.</p>
 
 <p>However, Zola—like other popular static site generators such as Jekyll and Hugo—is designed for general use and comes with many features that add unnecessary complexity for a basic website. I spent a lot of time troubleshooting why my blog posts weren’t displaying, searching for a suitable theme, and figuring out how to implement tagging (I now use taxonomies, but it took some time to figure out).</p>
 
-<p>Eventually, I realized that building my own static site generator, tailored specifically to my needs, would be a better investment of time than tweaking an existing general-purpose solution. So, I created PersonalPageGen—a lightweight static site generator designed for minimalist personal websites.</p>
-
-<p>Currently, PersonalPageGen can convert markdown files into HTML. Each page is a markdown file that starts with a header enclosed in +++ characters. The header contains the page title and date. The generator assumes there is a blog folder where all blog posts, and it automatically creates a page that lists posts from newest to oldest.</p>
+<p>Eventually, I realized that building my own static site generator, tailored specifically to my needs, would be a better investment of time than tweaking an existing general-purpose solution.
+So, I created <a href="https://github.com/drndivoje/PersonalPageGen">PersonalPageGen</a> lightweight static site generator designed for minimalist personal websites.</p>
 
 <p>Initially, I built it to fit my own needs, but I plan to refine it further so others can use it.</p>
 </p>
     </main>
     <footer>
-        <p>&copy; 2025 Ivan Doskovic. All rights reserved.</p>
-    </footer>
+    <p>&copy; 2025 Ivan Doskovic</p>
+    
+</footer>
 </body>
 </html>
