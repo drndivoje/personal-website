@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My self hosting setup</title>
+<meta name="description" content="Unknown">
+<meta name="author" content="Unknown">
+<meta property="og:title" content="My self hosting setup">
+<meta property="og:description" content="Unknown">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://drnd.rocks">
+<meta property="og:image" content="https://drnd.rocks/image.jpg">
+<link rel="canonical" href="https://drnd.rocks">
+<link rel="stylesheet" href="/css/main.css">
+</head>
+
+<body>
+    <header>
+    <nav>
+        <ul class="menu">
+            <li><a href="https://drnd.rocks/">Home</a></li>
+            
+                <li><a href="https://drnd.rocks/blog">Blog</a></li>
+            
+                <li><a href="https://drnd.rocks/about">About</a></li>
+            
+        </ul>
+    </nav>
+</header></div>
+
+    
+    
+    <div class="page">
+        <div class="post-meta">
+    <span class="publish-date">Published on: May 12, 2026</span>
+    <br>
+    
+    <span class="tags">Tags: 
+    
+        <span class="tag"><a href="/tags/Cloud">#Cloud</a></span>
+    
+        <span class="tag"><a href="/tags/Self-Hosting">#Self-Hosting</a></span>
+    
+        <span class="tag"><a href="/tags/Terraform">#Terraform</a></span>
+    
+    </span>
+    
+</div>
+        <p><h1>My self hosting setup</h1>
+
+<p>I have always wanted a way to organize my personal files and access them from anywhere. I am talking about a massive digital hoarding situation (tons of photos, home videos, random documents, and half forgotten pet projects). Honestly, I have been putting off dealing with this mess for years.</p>
+
+<p>I did try running a self hosted Nextcloud instance in the cloud once, but the cloud costs quickly got out of hand between the storage space and the CPU/memory requirements (PHP is not exactly lightweight). So, I decided to build my own self hosting setup instead. It is cheap, secure, and mostly runs itself.</p>
+
+<p>This post outlines the architecture and provides the core configuration snippets so you can build something similar.</p>
+
+<h2>The Architecture: A Proxy, a Tunnel, and a Home Lab</h2>
+
+<p>My setup has three core components:</p>
+
+<ul>
+<li>A Lightweight Remote Proxy: A tiny cloud server that acts as the public facing entry point.</li>
+<li>A Secure SSH Tunnel: The encrypted link between the cloud and my home.</li>
+<li>A Local Docker Server: My home machine where the actual services run.</li>
+</ul>
+
+<p><img src="/images/selfhosting-diagram.png" alt="Self Hosting Setup Diagram"></p>
+
+<h3>1. The Lightweight Remote Proxy</h3>
+
+<p>For the brains of the operation, I decided to fully automate the server creation process using Terraform and cloud init. The basic server provisioning works perfectly, though the parts related to SSL certificates and the Let&rsquo;s Encrypt certbot still need a bit of fine tuning.</p>
+
+<p>As I have metnitoned, I used Terraform to define the entire remote setup.</p>
+
+<pre><code class="language-hcl">resource &quot;hcloud_server&quot; &quot;proxy&quot; {
+  name        = &quot;reverse-proxy&quot;
+  image       = &quot;ubuntu-24.04&quot;
+  server_type = &quot;cx23&quot;
+  # ...
+  user_data = templatefile(&quot;${path.module}/cloud-init.yml&quot;, {
+    domain_name = var.domain_name
+    # ...
+  })
+  # ...
+}
+</code></pre>
+
+<p>The real magic happens with cloud init, which provisions the server on its very first boot. It installs NGINX and sets up a reverse proxy configuration. I wanted to use wildcard subdomains (for example, if my root domain is example.com, the subdomain could be something like *.local.example.com) to dynamically route requests to my local services. This NGINX config extracts the subdomain and uses it to redirect traffic directly into my SSH tunnel on port 8081.</p>
+
+<p>Here is the key snippet from the NGINX configuration that I deploy via cloud init:</p>
+
+<pre><code class="language-NGINX"># Remote NGINX: Redirects subdomains to the tunnel
+server {
+    listen 80;
+    server_name *.${domain_name};
+
+    set $subdomain &quot;&quot;;
+    if ($host ~* &quot;^(.*?)\.${domain_name}$&quot;) {
+        set $subdomain $1;
+    }
+
+    location / {
+        return 301 http://$host:8081/$subdomain/;
+    }
+}
+</code></pre>
+
+<p>For example if I want to have self host gitea instance, a request to &ldquo;gitea.local.example.com&rdquo; is instantly translated into a request to &ldquo;<a href="http://gitea.local.example.com:8081/gitea/&quot;">http://gitea.local.example.com:8081/gitea/&rdquo;</a>, which points directly at my home setup.</p>
+
+<h3>2. The Secure Tunnel: The Encrypted Highway home</h3>
+
+<p>With the remote proxy ready, I needed a secure way to connect it to my home network without exposing a bunch of ports on my firewall. A reverse SSH tunnel is the perfect tool for this.
+I wrote a simple script, start_tunnel.sh, that uses autossh to create a persistent and self-healing connection.</p>
+
+<pre><code class="language-bash">autossh -M 0 -f -N \
+    -o &quot;ServerAliveInterval=60&quot; \
+    -o &quot;ServerAliveCountMax=3&quot; \
+    -o &quot;ExitOnForwardFailure=yes&quot; \
+    -i &quot;$expanded_key_path&quot; \
+    -R &quot;$TUNNEL_PORT:localhost:$LOCAL_GATEWAY_PORT&quot; \
+    &quot;$REMOTE_USER@$SERVER_IP&quot;
+</code></pre>
+
+<p>This single command creates an encrypted highway from port 8081 on the cloud server to port 8081 on my local machine. It gives me incredible peace of mind knowing my home network is not wide open to the internet. Note that through this setup, I am able to safely SSH into my local server from the proxy server. The proxy server is publicly available and exposes the SSH port, but it only accepts connections from someone holding the correct private key. The corresponding public key is securely added during the initial server creation.</p>
+
+<h3>3. The Local Powerhouse: My Docker Home Lab</h3>
+
+<p>This is where the fun happens. On my local machine, I run all my services as Docker containers. My docker-compose.yml is the heart of my home lab, defining services like Jellyfin and Immich to handle my photos and videos. The final piece of the puzzle is a local NGINX container that acts as the &ldquo;traffic cop&rdquo; for my home lab.</p>
+
+<p>It listens on port 8081, catching all the traffic from the SSH tunnel. It then inspects the request path and proxies the request to the correct service container.</p>
+
+<pre><code class="language-NGINX">
+server {
+    listen 80;
+    # ...
+
+    # Route /jellyfin/* to the Jellyfin container
+    location /jellyfin/ {
+        proxy_pass http://jellyfin:8096/;
+        # ... proxy headers
+    }
+
+    # Route /photos/* to the Immich container
+    location /photos/ {
+        proxy_pass http://immich-server:2283/;
+        # ... proxy headers
+    }
+}
+</code></pre>
+
+<h3>Final Thoughts</h3>
+
+<p>The setup is not completely finished and needs a bit more work, particularly around monitoring and automation. For monitoring, I am planning to harden the public facing NGINX server in the cloud to block scanning bots, set up centralized log collection, and configure some basic alerting. All things considered, putting this entire system together was much easier than I originally expected.</p>
+</p>
+        </main>
+        <footer>
+    <p>&copy; 2026 Ivan Doskovic - Built with <a href="https://github.com/drndivoje/PersonalPageGen" target="_blank" >Personal Page Gen</a></p>
+    
+</footer>
+</body>
+
+</html>
