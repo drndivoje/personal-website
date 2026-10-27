@@ -5,14 +5,13 @@
     <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Build bicycle tracker using Kotlin - Progress, Lessons Learned, and Decisions Made (Part 3)</title>
-<meta name="description" content="Unknown">
-<meta name="author" content="Unknown">
+<meta name="description" content="Build bicycle tracker using Kotlin - Progress, Lessons Learned, and Decisions Made (Part 3)">
+<meta name="author" content="Ivan Doskovic">
 <meta property="og:title" content="Build bicycle tracker using Kotlin - Progress, Lessons Learned, and Decisions Made (Part 3)">
-<meta property="og:description" content="Unknown">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://drnd.rocks">
+<meta property="og:description" content="Build bicycle tracker using Kotlin - Progress, Lessons Learned, and Decisions Made (Part 3)">
+<meta property="og:url" content="https://drnd.rocks/blog/buliding_bicycle_tracker_part_3">
 <meta property="og:image" content="https://drnd.rocks/image.jpg">
-<link rel="canonical" href="https://drnd.rocks">
+<link rel="canonical" href="https://drnd.rocks/blog/buliding_bicycle_tracker_part_3">
 <link rel="stylesheet" href="/css/main.css">
 </head>
 
@@ -34,22 +33,24 @@
     
     <div class="page">
         <div class="post-meta">
-    <span class="publish-date">Published on: October 3, 2024</span>
-    <br>
-    
-    <span class="tags">Tags: 
-    
-        <span class="tag"><a href="/tags/Kotlin">#Kotlin</a></span>
-    
-        <span class="tag"><a href="/tags/AWS">#AWS</a></span>
-    
-    </span>
+    <div class="meta-left">
+        <div class="publish-date">Published on: October 3, 2024</div>
+        
+        <div class="tags">Tags:
+            
+            <span class="tag"><a href="/tags/Kotlin">#Kotlin</a></span>
+            
+            <span class="tag"><a href="/tags/AWS">#AWS</a></span>
+            
+        </div>
+        
+    </div>
     
 </div>
         <p><h1>Build bicycle tracker using Kotlin - Progress, Lessons Learned, and Decisions Made (Part 3)</h1>
 
-<p>After several months of on-and-off work on my <a href="https://github.com/drndivoje/whereisivan" target="_blank">personal bicycle tracking app</a>, I’ve decided to share my progress,
-the lessons I’ve learned, and the decisions that shaped the project.</p>
+<p>After several months of on-and-off work on my <a href="https://github.com/drndivoje/whereisivan" target="_blank">personal bicycle tracking app</a>, I have decided to share my progress,
+the lessons I have learned, and the decisions that shaped the project.</p>
 
 <h1>Android Client and Complexity</h1>
 
@@ -67,14 +68,14 @@ The app then sends the data to a server, so my family and friends can view my li
 <h1>Deployment and infrastructure</h1>
 
 <p>For deployment, I chose to host the server API and the dashboard UI on AWS using Docker containers managed by ECS (Elastic Container Service).
-While this may not be the cheapest solution there are definitely more cost-effective options on AWS, such as using Lambda functions. I preferred this setup because it allows easy deployment to other cloud providers or any Docker-compatible platform.</p>
+While this may not be the cheapest solution there are definitely more cost effective options on AWS, such as using Lambda functions. I preferred this setup because it allows easy deployment to other cloud providers or any Docker-compatible platform.</p>
 
 <p>Another key decision was to define the infrastructure using Terraform, which simplifies the process of creating and destroying the entire stack, enabling seamless management of the infrastructure.</p>
 
 <h1>What’s Next for My Bicycle Tracking App?</h1>
 
 <p>This project is still a work in progress, and I’m excited to continue investing more time into it. The primary goal is to enhance my skills as a full-stack developer and gain deeper insights into the Kotlin ecosystem.
-So far, it’s been a interesting journey, even with the limited time I’ve had to dedicate to it.</p>
+So far, I is been a interesting journey, even with the limited time I have to dedicate to it.</p>
 </p>
         <footer>
     <p>&copy; 2026 Ivan Doskovic - Built with <a href="https://github.com/drndivoje/PersonalPageGen" target="_blank" >Personal Page Gen</a></p>
