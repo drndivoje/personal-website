@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vluent: What Changed in the Last Few Months</title>
+<meta name="description" content="Vluent: What Changed in the Last Few Months">
+<meta name="author" content="Ivan Doskovic">
+<meta property="og:title" content="Vluent: What Changed in the Last Few Months">
+<meta property="og:description" content="Vluent: What Changed in the Last Few Months">
+<meta property="og:url" content="https://drnd.rocks/blog/vluent_updates">
+<meta property="og:image" content="https://drnd.rocks/image.jpg">
+<link rel="canonical" href="https://drnd.rocks/blog/vluent_updates">
+<link rel="stylesheet" href="/css/main.css">
+</head>
+
+<body>
+    <header>
+    <nav>
+        <ul class="menu">
+            <li><a href="https://drnd.rocks/">Home</a></li>
+            
+                <li><a href="https://drnd.rocks/blog">Blog</a></li>
+            
+                <li><a href="https://drnd.rocks/projects">Projects</a></li>
+            
+        </ul>
+    </nav>
+</header></div>
+
+    
+    
+    <div class="page">
+        <div class="post-meta">
+    <div class="meta-left">
+        <div class="publish-date">Published on: November 5, 2026</div>
+        
+        <div class="tags">Tags:
+            
+            <span class="tag"><a href="/tags/Vluent">#Vluent</a></span>
+            
+            <span class="tag"><a href="/tags/Java">#Java</a></span>
+            
+        </div>
+        
+    </div>
+    
+</div>
+        <p><h1>Vluent: What Changed in the Last Few Months</h1>
+
+<p>Vluent is a small Java library I have been working on, on and off, for quite a long time. The first commit is from 2017. The idea is that validation rules should be plain simple objects that you can name, test and reuse, and you combine them with a fluent API. No annotation hell, and no if/else chains that nobody wants to touch.</p>
+
+<pre><code class="language-java">return Vluent.create()
+    .on(app.name(), NAME_PRESENT)
+    .when(isSelfEmployed)
+    .then(app, SELF_EMPLOYED_INCOME)
+    .validate();
+</code></pre>
+
+<p>where validators are defined as named variables using Lambda expression in Java:</p>
+
+<pre><code class="language-java"> static final Validator&lt;String&gt; NAME_PRESENT =
+      name -&gt;
+          name != null &amp;&amp; !name.isBlank()
+              ? ValidationResult.SUCCESS
+              : ValidationResult.createError(&quot;Application name is required&quot;);
+
+  static final Validator&lt;Application&gt; SELF_EMPLOYED_INCOME =
+      app -&gt;
+          app.selfEmployedIncome() != null &amp;&amp; app.selfEmployedIncome().signum() &gt; 0
+              ? ValidationResult.SUCCESS
+              : ValidationResult.createError(
+                  &quot;Self-employed income must be provided and greater than zero&quot;);
+
+</code></pre>
+
+<p>For a long time it was a side project that I looked at a few times a year. In the last couple of months I finally spent some real time on it, so here is a short overview of what changed.</p>
+
+<h3>Spring support</h3>
+
+<p>This was the main thing missing. Most Java code I see in practice runs on Spring Boot, and a validation library that does not fit there is hard to sell. There are now two ways to use Vluent with Spring&rsquo;s <em>@Valid</em>.</p>
+
+<p>The first one goes through Bean Validation. You put <em>@ValidateBeanWith</em> on the bean, and it works together with the usual <em>@NotBlank</em> and <em>@NotNull</em> annotations. The second one is a new <em>VluentSpringValidator</em> class. It wraps a Vluent validator as a Spring validator, and you register it in an <em>@InitBinder</em> method:</p>
+
+<pre><code class="language-java">binder.addValidators(new VluentSpringValidator&lt;&gt;(User.class, new UserValidator()));
+</code></pre>
+
+<p>The nice part of the second option is that you create the validator yourself. So it can be a Spring bean with injected dependencies, for example a repository that checks if an email already exists. In both cases the same <em>Validator<T></em> works with Spring and without it, so you write a rule once.</p>
+
+<p>To show how this looks in a real application, I added a small Spring Boot example project to the repository. It uses both options and you can try it with <em>curl</em>.</p>
+
+<h3>All errors, not just the first one</h3>
+
+<p>Until now, a validation chain stopped at the first failed rule and returned only that message. This is fine for a quick check, but annoying when a user submits a form with three mistakes and has to fix them one by one. <em>ValidationResult</em> now keeps a list of all errors in the chain, and you get all of them with <em>getErrors()</em>.</p>
+
+<h3>Cleaning up</h3>
+
+<p>The rest is mostly housekeeping, but it matters if I want other people to use the library. The code is now split into an <em>api</em> package and an <em>internal</em> package, and there is a proper <em>module-info.java</em>. Only the <em>api</em> package is exported, so I can change the internals without breaking anyone. Bean Validation and Spring are optional dependencies, so the library itself still has zero transitive dependencies.</p>
+
+<h3>What&rsquo;s next</h3>
+
+<p>All of this will go into the <em>0.0.5</em> release. If you want to take a look, the code is on <a href="https://github.com/drndivoje/vluent">GitHub</a> and the current version is available on Maven Central.</p>
+</p>
+        <footer>
+    <p>&copy; 2026 Ivan Doskovic - Built with <a href="https://github.com/drndivoje/PersonalPageGen" target="_blank" >Personal Page Gen</a></p>
+    
+</footer>
+</body>
+
+</html>
