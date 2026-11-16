@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How I Set Up Local AI Agents for My Side Project</title>
+<meta name="description" content="How I Set Up Local AI Agents for My Side Project">
+<meta name="author" content="Ivan Doskovic">
+<meta property="og:title" content="How I Set Up Local AI Agents for My Side Project">
+<meta property="og:description" content="How I Set Up Local AI Agents for My Side Project">
+<meta property="og:url" content="https://drnd.rocks/blog/local_ai_agents_for_whereisivan">
+<meta property="og:image" content="https://drnd.rocks/image.jpg">
+<link rel="canonical" href="https://drnd.rocks/blog/local_ai_agents_for_whereisivan">
+<link rel="stylesheet" href="/css/main.css">
+</head>
+
+<body>
+    <header>
+    <nav>
+        <ul class="menu">
+            <li><a href="https://drnd.rocks/">Home</a></li>
+            
+                <li><a href="https://drnd.rocks/blog">Blog</a></li>
+            
+                <li><a href="https://drnd.rocks/projects">Projects</a></li>
+            
+        </ul>
+    </nav>
+</header></div>
+
+    
+    
+    <div class="page">
+        <div class="post-meta">
+    <div class="meta-left">
+        <div class="publish-date">Published on: November 16, 2026</div>
+        
+        <div class="tags">Tags:
+            
+            <span class="tag"><a href="/tags/Whereisivan">#Whereisivan</a></span>
+            
+            <span class="tag"><a href="/tags/AI">#AI</a></span>
+            
+            <span class="tag"><a href="/tags/Docker">#Docker</a></span>
+            
+        </div>
+        
+    </div>
+    
+</div>
+        <p><h1>How I Set Up Local AI Agents for My Side Project</h1>
+
+<p>For the last two years, my use of AI for programming looked the same. I open a chat, paste some code, explain the context, copy the answer back into the editor, run the tests, paste the error back into the chat, and repeat. Agent mode is not much different. I explain what I want and wait for the agent to finish. This works for small tasks, but on a real project it never felt right. I was the one moving context around, and the AI was waiting for me.</p>
+
+<p>That is not how developers work in a team. Work goes through issues, branches, pull requests and code reviews. Nobody sends me a code snippet in a chat and asks me to paste it into the codebase. Someone opens a pull request, CI runs, and I review it. As I wrote in <a href="/blog/software_developers_are_not_coders" target="_blank">Software Developers Are Not Coders</a>, typing code is only a small part of the job anyway.</p>
+
+<p>So I tried something different on my <a href="https://github.com/drndivoje/whereisivan" target="_blank">bicycle tracker</a>. Instead of chatting with AI, I let AI agents work as one more contributor in the repository. One agent reads the code and opens an issue. Another one picks up the issue and opens a draft pull request. My job is to review the pull request and decide if it gets merged.</p>
+
+<p>The runner itself is open source and available on GitHub: <a href="https://github.com/drndivoje/agents-runner" target="_blank">agents-runner</a>.</p>
+
+<h2>The Idea</h2>
+
+<p>There are already many tools for running AI agents on a project. I use Claude Code with a Pro subscription, so I wanted a simple setup that runs Claude Code in headless mode (<em>claude -p</em>) on that subscription. The Anthropic API is billed separately, and I did not want a second bill. The setup should also use only tools most developers already know: Bash, cron and Docker.</p>
+
+<p>The agents are defined in the <a href="https://github.com/drndivoje/whereisivan" target="_blank">whereisivan repository</a> itself, the same way I use Claude Code there every day. Two of them work on the Kotlin backend:</p>
+
+<ul>
+<li><a href="https://github.com/drndivoje/whereisivan/blob/main/.claude/agents/backend-issue-finder.md" target="_blank"><strong>backend-issue-finder</strong></a> reads the backend code, finds one concrete bug or improvement, and creates a GitHub issue with the label <em>agent-ready</em>.</li>
+<li><a href="https://github.com/drndivoje/whereisivan/blob/main/.claude/agents/backend-issue-fixer.md" target="_blank"><strong>backend-issue-fixer</strong></a> takes the oldest <em>agent-ready</em> issue, makes a small fix with a unit test, and opens a draft pull request.</li>
+</ul>
+
+<p>I recently added a third one, <em>android-issue-finder</em>, which does the same as the backend finder but for the Android app.</p>
+
+<p>The goal is to pick small tasks that would take me about 30 minutes, but that pile up over time. Every pull request goes through my review, so I stay in control of the project. The agents run at night from cron, or I start them by hand.</p>
+
+<h2>Why Not Use Claude Code Scheduled Tasks?</h2>
+
+<p>Claude Code can already run tasks on a schedule, so why build anything? Because I wanted control over three things:</p>
+
+<ul>
+<li><strong>Fixed steps stay in scripts.</strong> Creating an issue, pushing a branch or opening a pull request should not depend on the AI remembering to do it right. Plain bash scripts do these steps before and after the AI runs.</li>
+<li><strong>No credentials for the AI.</strong> The AI never sees my GitHub token.</li>
+<li><strong>Isolation.</strong> Every run happens in a Docker container on my own machine, as a non-root user, and can only reach a short list of websites.</li>
+</ul>
+
+<h2>How One Run Works</h2>
+
+<p>Every run is one command and one fresh Docker container. When the run is finished, the container is gone and only the logs stay.</p>
+
+<p>The most important rule of the whole setup is that <strong>the AI only reads and edits code</strong>. Everything else is done by two small scripts next to the agent&rsquo;s config:</p>
+
+<ul>
+<li><em>pre.sh</em> runs before the AI. It clones the repository and prepares the task.</li>
+<li><em>post.sh</em> runs after the AI. It checks the result and talks to GitHub.</li>
+</ul>
+
+<p>For example, the finder does not create the issue itself. It only answers with JSON:</p>
+
+<pre><code class="language-json">{&quot;title&quot;: &quot;Fix 500 on POST /api/activity/stop when the activity id is unknown&quot;, &quot;body&quot;: &quot;## Problem ...&quot;}
+</code></pre>
+
+<p>or, if it found nothing worth reporting:</p>
+
+<pre><code class="language-json">{&quot;skip&quot;: &quot;one-sentence reason&quot;}
+</code></pre>
+
+<p>Then <em>post.sh</em> checks the answer (not empty, title not too long, no open issue with the same title) and creates the issue. Here is <a href="https://github.com/drndivoje/whereisivan/issues/1" target="_blank">the first issue</a> created by the backend finder. When the finder has nothing new to report, the run simply ends:</p>
+
+<pre><code>model found nothing worth filing: The real defects I found are already covered by open issues...
+</code></pre>
+
+<p>The fixer works the same way, but it is stricter, because it changes code:</p>
+
+<ol>
+<li><em>pre.sh</em> takes the oldest <em>agent-ready</em> issue, relabels it to <em>agent-wip</em> and creates the branch <em>agent/issue-&lt;n&gt;</em>.</li>
+<li>The AI fixes the issue, writes a test and runs the tests.</li>
+<li>A separate <em>check.sh</em> runs the tests again, without any secrets.</li>
+<li><em>post.sh</em> does not trust the result. Only files in <em>backend/src/</em> may change, and the tests must pass. Only then does it push the branch, open a draft pull request and relabel the issue to <em>agent-done</em>.</li>
+</ol>
+
+<p>If anything fails, the issue stays <em>agent-wip</em> with a comment explaining why. I read the logs and relabel it <em>agent-ready</em> to try again.</p>
+
+<p>Every run also adds one line to a CSV file with tokens, duration and tool calls, so I can see how much of my subscription each run uses.</p>
+
+<h2>Results So Far</h2>
+
+<p>So far the finders have opened 12 issues. The fixer has opened 5 draft pull requests, and I merged 3 of them, for example <a href="https://github.com/drndivoje/whereisivan/pull/3" target="_blank">the fix for the first issue</a>. Two issues are stuck in <em>agent-wip</em> because the fixer did not finish them. That is the expected outcome: the failure is recorded, and nothing broken gets pushed.</p>
+
+<h2>Configuration</h2>
+
+<p>Running an agent is one command:</p>
+
+<pre><code class="language-bash">bin/agent whereisivan backend-issue-finder   # → a new issue labelled agent-ready
+bin/agent whereisivan backend-issue-fixer    # → a draft PR for the oldest agent-ready issue
+</code></pre>
+
+<p>The instructions for each agent live in the project repository, in <em>.claude/agents/</em>. So the agent learns about the project from the project&rsquo;s own <em>CLAUDE.md</em>, and I can use the same agents myself when I work on the code. The runner only needs a small config file per agent:</p>
+
+<pre><code class="language-bash"># agents/whereisivan/backend-issue-finder/agent.env
+ALLOWED_TOOLS=&quot;Read,Grep,Glob&quot;
+MAX_TURNS=30
+MODEL=sonnet
+TIMEOUT_MINUTES=30
+</code></pre>
+
+<p>_ALLOWED<em>TOOLS</em> is the important line. It lives in the runner on purpose: the agent definition in the project can ask for fewer tools, but never for more. The finder can only read files. The fixer can edit files and run the tests, and nothing else.</p>
+
+<p>Before scheduling anything, I ran both agents by hand a few times and read what they produced. Once the results looked good, I added them to my crontab:</p>
+
+<pre><code class="language-cron">0 2 * * *  $AGENTS_RUNNER/bin/agent whereisivan backend-issue-finder &gt;&gt; $AGENTS_RUNNER/logs/cron.log 2&gt;&amp;1
+0 3 * * *  $AGENTS_RUNNER/bin/agent whereisivan backend-issue-fixer  &gt;&gt; $AGENTS_RUNNER/logs/cron.log 2&gt;&amp;1
+</code></pre>
+
+<h2>Security</h2>
+
+<p>An agent that runs at night while I sleep is not the same as a chat window, so the setup is strict:</p>
+
+<ul>
+<li><strong>Non-root container.</strong> The firewall is set up first. After that, the run switches to a normal user without privileges, so the agent cannot change the firewall.</li>
+<li><strong>Blocked network.</strong> All outgoing traffic is blocked, except a short allowlist: the Claude API, GitHub, Maven Central and Gradle. Everything else, including plain HTTP, is rejected.</li>
+<li><strong>One token per agent.</strong> Each agent has its own fine-grained GitHub token, limited to one repository and to the permissions it needs. Only <em>pre.sh</em> and <em>post.sh</em> get the token, never the AI or the code it wrote.</li>
+<li><strong>Protected main branch.</strong> The agents can only push their own branches, and every change goes through a pull request that I review.</li>
+</ul>
+
+<p>I know a Docker container is not full isolation from the host machine. There are known ways to escape a container and get root access on the host. My next step is to run the agents inside a KVM virtual machine.</p>
+
+<h2>Use It for Your Own Project</h2>
+
+<p>I made the runner generic, so you can use it on your own repository with your own Claude subscription. The runner itself knows only Docker and Claude Code. Everything else, including git and GitHub, lives in the agent&rsquo;s own scripts. Your agent does not have to open issues: it can write a report, send a message or open a pull request.</p>
+
+<p>To start, copy the example agent in <em>agents/example/</em>. It is a commented template that shows the whole flow: what <em>pre.sh</em> prints becomes the prompt, the AI answers in a JSON format you define, and <em>post.sh</em> checks that answer before it does anything with it.</p>
+
+<p>The code is on GitHub at <a href="https://github.com/drndivoje/agents-runner" target="_blank">github.com/drndivoje/agents-runner</a> under the MIT license.</p>
+</p>
+        <footer>
+    <p>&copy; 2026 Ivan Doskovic - Built with <a href="https://github.com/drndivoje/PersonalPageGen" target="_blank" >Personal Page Gen</a></p>
+    
+</footer>
+</body>
+
+</html>
