@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vluent 0.0.5 is Released</title>
+<meta name="description" content="Vluent 0.0.5 is Released">
+<meta name="author" content="Ivan Doskovic">
+<meta property="og:title" content="Vluent 0.0.5 is Released">
+<meta property="og:description" content="Vluent 0.0.5 is Released">
+<meta property="og:url" content="https://drnd.rocks/blog/vluent_0_0_5_release">
+<meta property="og:image" content="https://drnd.rocks/image.jpg">
+<link rel="canonical" href="https://drnd.rocks/blog/vluent_0_0_5_release">
+<link rel="stylesheet" href="/css/main.css">
+</head>
+
+<body>
+    <header>
+    <nav>
+        <ul class="menu">
+            <li><a href="https://drnd.rocks/">Home</a></li>
+            
+                <li><a href="https://drnd.rocks/blog">Blog</a></li>
+            
+                <li><a href="https://drnd.rocks/projects">Projects</a></li>
+            
+        </ul>
+    </nav>
+</header></div>
+
+    
+    
+    <div class="page">
+        <div class="post-meta">
+    <div class="meta-left">
+        <div class="publish-date">Published on: November 22, 2026</div>
+        
+        <div class="tags">Tags:
+            
+            <span class="tag"><a href="/tags/Vluent">#Vluent</a></span>
+            
+            <span class="tag"><a href="/tags/Java">#Java</a></span>
+            
+        </div>
+        
+    </div>
+    
+</div>
+        <p><h1>Vluent 0.0.5 is Released</h1>
+
+<p>A couple of weeks ago I wrote about <a href="/blog/vluent_updates">what changed in Vluent</a> in the last few months. All of that is now released as version <em>0.0.5</em> and available on Maven Central.</p>
+
+<pre><code class="language-xml">&lt;dependency&gt;
+  &lt;groupId&gt;io.github.drndivoje&lt;/groupId&gt;
+  &lt;artifactId&gt;vluent&lt;/artifactId&gt;
+  &lt;version&gt;0.0.5&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre>
+
+<p>Here is a short summary of everything that went into the release since <em>0.0.4</em>.</p>
+
+<h3>New features</h3>
+
+<ul>
+<li><strong>Spring validator support.</strong> The new <em>VluentSpringValidator</em> class wraps any Vluent validator as a Spring validator. You register it in an <em>@InitBinder</em> method and it works with <em>@Valid</em>. Spring is an optional dependency, you only need it if you use this class.</li>
+<li><strong>All errors in the chain.</strong> A validation chain does not stop at the first failed rule anymore. <em>ValidationResult</em> keeps a list of all errors, and you get them with <em>getErrors()</em>.</li>
+<li><strong>Exceptions are part of the validation.</strong> If a value supplier or a validator throws an exception, the chain does not blow up. The exception message is added as a validation error, like any other failed rule.</li>
+</ul>
+
+<h3>Bug fixes</h3>
+
+<ul>
+<li><strong>Inverted validation.</strong> <em>invert()</em> on a validator did not work correctly. When the original validator passed, the inverted one also passed. Now it fails, as you would expect. Embarrassing, but that is what tests are for. I fixed the wrong tests as well.</li>
+</ul>
+
+<h3>Breaking changes</h3>
+
+<p>The version starts with <em>0.0</em>, so I allowed myself to break a few things. These are the changes compared to <em>0.0.4</em>:</p>
+
+<ul>
+<li><strong>Packages.</strong> The public classes moved from <em>io.github.drndivoje.vluent</em> and <em>io.github.drndivoje.vluent.model</em> to <em>io.github.drndivoje.vluent.api</em>. Everything else is in the <em>internal</em> package and is not exported by the new <em>module-info.java</em>. In most cases updating the imports is enough.</li>
+<li><strong>Error messages.</strong> <em>ValidationResult.getErrorMessage()</em> is replaced with <em>getErrors()</em>, which returns a list.</li>
+<li><strong>Converting the result.</strong> The <em>ValidationConverter</em> interface is removed. <em>validateAndConvert</em> now takes a plain Java <em>Function<ValidationResult, T></em>, so you can pass a lambda or a method reference:</li>
+</ul>
+
+<pre><code class="language-java">ResponseEntity&lt;?&gt; response = Vluent.create()
+    .on(user, new UserValidator())
+    .validateAndConvert(result -&gt;
+        result.isSuccess()
+            ? ResponseEntity.ok().build()
+            : ResponseEntity.badRequest().body(result.getErrors()));
+</code></pre>
+
+<h3>Spring Boot example</h3>
+
+<p>I reworked the example project in the repository. It now runs on Spring Boot <em>4.1.2</em>, has a Maven wrapper, and shows both ways to use Vluent with Spring: with <em>@ValidateBeanWith</em> through Bean Validation, and with <em>VluentSpringValidator</em>. The code is split into <em>dto</em>, <em>service</em>, <em>validation</em> and <em>web</em> packages, so it looks closer to a real application. There is a README with <em>curl</em> commands to try it out.</p>
+
+<h3>Housekeeping</h3>
+
+<p>I improved the test coverage, fixed the Javadoc warnings, removed the old Travis CI configuration and upgraded <em>central-publishing-maven-plugin</em> to <em>0.0.9</em>. The README is rewritten as well, and it now starts with the problem Vluent solves before showing any code.</p>
+
+<p>The library still has zero transitive dependencies. The code is on <a href="https://github.com/drndivoje/vluent">GitHub</a>.</p>
+</p>
+        <footer>
+    <p>&copy; 2026 Ivan Doskovic - Built with <a href="https://github.com/drndivoje/PersonalPageGen" target="_blank" >Personal Page Gen</a></p>
+    
+</footer>
+</body>
+
+</html>
